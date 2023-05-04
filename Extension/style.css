@@ -1,0 +1,15 @@
+body {
+    min-width: 300px;
+}
+
+.center {
+    text-align: center;
+}
+
+button {
+    margin-right: 5px;
+  }
+  
+  button:last-child {
+    margin-right: 0;
+  }
