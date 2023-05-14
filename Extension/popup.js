@@ -1,6 +1,10 @@
 let saveAsTxtButton = document.getElementById('saveAsTxtButton');
 let saveAsMarkdownButton = document.getElementById('saveAsMarkdownButton');
 let saveAsPDFButton = document.getElementById('saveAsPDFButton');
+let copyButton = document.getElementById('copyButton');
+const button = document.querySelector('#copyButton');
+const icon = button.querySelector('span');
+
 
 saveAsTxtButton.addEventListener("click", async () => {
     // Get current active tab
@@ -31,6 +35,43 @@ saveAsPDFButton.addEventListener("click", async () => {
         func: saveAsPDF,
     });
 });
+
+copyButton.addEventListener("click", async () => {
+    // Get current active tab
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    // Wrap the executeScript in a Promise to be able to use .then()
+    const executeScriptPromise = new Promise((resolve) => {
+        chrome.scripting.executeScript(
+            {
+                target: { tabId: tab.id },
+                func: copyToClipboard,
+            },
+            ([result]) => resolve(result.result) // Resolve the Promise with success or failure
+            );
+    });
+
+    // Wait for executeScriptPromise to resolve before running your logic
+    executeScriptPromise.then((result) => {
+        // Remove any existing success/failure icons
+        icon.classList.remove('success-icon');
+        icon.classList.remove('failure-icon');
+        
+        // Logic to change icon depending on status
+        if (result.success){
+            icon.classList.add('success-icon');
+        } else {
+            icon.classList.add('failure-icon');
+        }
+        
+        // Revert the icon back to default after 2 seconds
+        setTimeout(() => {
+            icon.classList.remove('success-icon');
+            icon.classList.remove('failure-icon');
+        }, 2000);
+    });
+});
+
 
 
 // Function to save text to chatData as TXT
@@ -252,11 +293,39 @@ function htmlToMarkdown(html) {
     for (const s of e) {
         if (s.querySelector('.whitespace-pre-wrap')) {
             let innerHtml = s.querySelector(".whitespace-pre-wrap").innerHTML;
-            t += `${htmlToMarkdown(s.querySelectorAll('img').length > 1 ? `**You:**` : `**ChatGPT:**`)}\n\n\n${htmlToMarkdown(innerHtml)}\n------------------\n`
+            t += `${htmlToMarkdown(s.querySelectorAll('img').length > 1 ? `**You:**` : `**ChatGPT:**`)}\n\n${htmlToMarkdown(innerHtml)}\n\n------------------\n\n`
         }
     }
     let handle = await window.showSaveFilePicker({ suggestedName: "Saved_ChatGPT_.md" });
     let stream = await handle.createWritable();
     await stream.write(t);
     await stream.close();
+}
+
+
+
+
+// function to copy the text to clipboard
+async function copyToClipboard() {
+    const elements = document.querySelectorAll(".text-gray-800");
+    let chatData = "";
+    for (const element of elements) {
+        if (element.querySelector('.whitespace-pre-wrap')) {
+            let innerText = element.querySelector(".whitespace-pre-wrap").innerText;
+            chatData += `${element.querySelectorAll('img').length > 1 ? '**You:**' : '**ChatGPT:**'}\n\n\n${innerText}\n------------------\n`;
+        }
+    }
+
+    if (!chatData || chatData === "") {
+        return { success: false };
+    }
+
+    // Create a textarea element, copy the text, and remove the textarea
+    const textarea = document.createElement("textarea");
+    document.body.appendChild(textarea);
+    textarea.value = chatData;
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return { success: true };
 }
