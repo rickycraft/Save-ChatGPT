@@ -7,6 +7,7 @@ This Chrome extension allows you to save your ChatGPT conversations in different
 - Save conversations as TXT files
 - Save conversations as Markdown files
 - Save conversations as PDF files
+- Copy  conversations to Clipboard
 
 ## Installation
 
