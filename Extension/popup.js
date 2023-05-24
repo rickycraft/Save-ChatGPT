@@ -219,7 +219,7 @@ function htmlToMarkdown(html) {
     const orderedLists = markdown.match(orderedRegex);
     if (orderedLists) {
         orderedLists.forEach((orderedList) => {
-            let mdOrderedList = '';
+            let mdOrderedList = '\n';
             const listItems = orderedList.match(/<li.*?>(.*?)<\/li>/g);
             if (listItems) {
                 listItems.forEach((listItem, index) => {
@@ -233,6 +233,7 @@ function htmlToMarkdown(html) {
                     }
                 });
             }
+            mdOrderedList += '\n'; // New line added after the list ends
             markdown = markdown.replace(orderedList, mdOrderedList);
         });
     }
@@ -312,7 +313,7 @@ async function copyToClipboard() {
     for (const element of elements) {
         if (element.querySelector('.whitespace-pre-wrap')) {
             let innerText = element.querySelector(".whitespace-pre-wrap").innerText;
-            chatData += `${element.querySelectorAll('img').length > 1 ? '**You:**' : '**ChatGPT:**'}\n\n\n${innerText}\n------------------\n`;
+            chatData += `${element.querySelectorAll('img').length > 1 ? '**You:**' : '**ChatGPT:**'}\n\n\n${innerText}\n\n------------------\n\n`;
         }
     }
 
