@@ -76,12 +76,12 @@ copyButton.addEventListener("click", async () => {
 
 // Function to save text to chatData as TXT
 async function saveAsTxt() {
-    let element = document.querySelector(".pr-14.bg-gray-800");
+    let element = document.querySelector(".text-base");
     if (!element || element.innerText === undefined) {
         alert("Nothing found");
         return;
     }  
-    const elements = document.querySelectorAll(".text-gray-800");
+    const elements = document.querySelectorAll(".text-base");
     let chatData = "";
     for (const element of elements) {
         if (element.querySelector('.whitespace-pre-wrap')) {
@@ -284,7 +284,7 @@ function htmlToMarkdown(html) {
 }
 
 
-    let element = document.querySelector(".pr-14.bg-gray-800");
+    let element = document.querySelector(".text-base");
     if (!element || element.innerText === undefined) {
         alert("Nothing found");
         return;
