@@ -19,10 +19,12 @@ saveAsTxtButton.addEventListener("click", async () => {
 saveAsMarkdownButton.addEventListener("click", async () => {
     // Get current active tab
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let includeInputCheckbox = document.getElementById('includeInput');
     // Execute script to parse chat on page and save as Markdown
     chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: saveAsMarkdown,
+        args: [includeInputCheckbox.checked]
     });
 });
 
@@ -56,14 +58,14 @@ copyButton.addEventListener("click", async () => {
         // Remove any existing success/failure icons
         icon.classList.remove('success-icon');
         icon.classList.remove('failure-icon');
-        
+
         // Logic to change icon depending on status
         if (result.success){
             icon.classList.add('success-icon');
         } else {
             icon.classList.add('failure-icon');
         }
-        
+
         // Revert the icon back to default after 2 seconds
         setTimeout(() => {
             icon.classList.remove('success-icon');
@@ -80,7 +82,7 @@ async function saveAsTxt() {
     if (!element || element.innerText === undefined) {
         alert("Nothing found");
         return;
-    }  
+    }
     const elements = document.querySelectorAll(".text-base");
     let chatData = "";
     for (const element of elements) {
@@ -88,7 +90,7 @@ async function saveAsTxt() {
             let innerText = element.querySelector(".whitespace-pre-wrap").innerText;
             chatData += `${element.querySelectorAll('img').length > 1 ? '**You:**' : '**ChatGPT:**'}\n\n\n${innerText}\n------------------\n`;
         }
-    }    
+    }
     let handle = await window.showSaveFilePicker({ suggestedName: "Saved_ChatGPT_.txt" });
     let stream = await handle.createWritable();
     await stream.write(chatData);
@@ -105,7 +107,7 @@ function saveAsPDF() {
             content += `${element.querySelectorAll('img').length > 1 ? `**You:**` : `**ChatGPT:**`}<br><br><br>${innerHtml}<br>------------------<br>`
         }
     }
-    
+
     if (content.trim() === "") {
         alert("Nothing found");
         return;
@@ -162,7 +164,7 @@ function saveAsPDF() {
 
 
 // Function to save text to chatData as Markdown
-async function saveAsMarkdown() {
+async function saveAsMarkdown(checked) {
 
     // Function to convert HTML to Markdown
 function htmlToMarkdown(html) {
@@ -189,6 +191,7 @@ function htmlToMarkdown(html) {
     markdown = markdown.replace(/<button class="flex ml-auto gap-2">(.*?)<\/button>/g, ''); // Remove copy button SVG
     markdown = markdown.replace(/<span(?: class="[^"]*")?>|<\/span>/g, ''); // Remove span tags with or without a class
     markdown = markdown.replace(/<p>(.*?)<\/p>/g, '$1\n');
+    markdown = markdown.replace(/<span class="" data-state="closed">.*Copy code<\/button>/g, ''); // Remove the "Copy" button
 
     // Add these lines to convert &lt; and &gt; to < and >, respectively
     markdown = markdown.replace(/&lt;/g, '<');
@@ -288,18 +291,27 @@ function htmlToMarkdown(html) {
     if (!element || element.innerText === undefined) {
         alert("Nothing found");
         return;
-    }    
-    const e = document.querySelectorAll(".text-base");
-    let t = "";
-    for (const s of e) {
-        if (s.querySelector('.whitespace-pre-wrap')) {
-            let innerHtml = s.querySelector(".whitespace-pre-wrap").innerHTML;
-            t += `${htmlToMarkdown(s.querySelectorAll('img').length > 1 ? `**You:**` : `**ChatGPT:**`)}\n\n${htmlToMarkdown(innerHtml)}\n\n------------------\n\n`
+    }
+    const elements = document.querySelectorAll(".text-base.group");
+    let chatData = "";
+    for (const element of elements) {
+        if (element.querySelector('.whitespace-pre-wrap')) {
+            const isAgent = element.querySelectorAll('.agent-turn').length > 0;
+            // If is not the agent and i dont want my input to be included, skip
+            if (!isAgent && !checked) {
+                continue;
+            }
+            let innerHTML = element.querySelector(".whitespace-pre-wrap").innerHTML;
+            if (checked) {
+                chatData += htmlToMarkdown(isAgent ? '**ChatGPT:**\n' : '**Me:**\n');
+            }
+            chatData += `${htmlToMarkdown(innerHTML)}\n\n------------------\n\n`;
         }
     }
-    let handle = await window.showSaveFilePicker({ suggestedName: "Saved_ChatGPT_.md" });
+    const name = `ChatGPT ${document.querySelector('.bg-token-surface-secondary.group').innerText}.md`
+    let handle = await window.showSaveFilePicker({ suggestedName: name });
     let stream = await handle.createWritable();
-    await stream.write(t);
+    await stream.write(chatData);
     await stream.close();
 }
 

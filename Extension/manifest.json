@@ -1,7 +1,7 @@
 {
     "name": "Save ChatGPT",
     "description": "Download ChatGPT conversations into PDF, Text, and Markdown files.",
-    "version": "2.4",
+    "version": "2.5",
     "manifest_version": 3,
     "action": {
         "default_popup": "popup.html",
